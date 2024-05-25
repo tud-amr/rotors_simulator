@@ -29,9 +29,7 @@
 
 namespace gazebo {
 
-GazeboMultirotorBasePlugin::~GazeboMultirotorBasePlugin() {
-  
-}
+GazeboMultirotorBasePlugin::~GazeboMultirotorBasePlugin() {}
 
 void GazeboMultirotorBasePlugin::Load(physics::ModelPtr _model,
                                       sdf::ElementPtr _sdf) {
@@ -86,7 +84,7 @@ void GazeboMultirotorBasePlugin::Load(physics::ModelPtr _model,
 }
 
 // This gets called by the world update start event.
-void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo& _info) {
+void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo &_info) {
   if (kPrintOnUpdates) {
     gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
@@ -142,8 +140,8 @@ void GazeboMultirotorBasePlugin::CreatePubsAndSubs() {
       "~/" + namespace_ + "/" + actuators_pub_topic_, 10);
 
   // connect_gazebo_to_ros_topic_msg.set_gazebo_namespace(namespace_);
-  connect_gazebo_to_ros_topic_msg.set_gazebo_topic("~/" + model_->GetName() +
-                                                   "/" + actuators_pub_topic_);
+  connect_gazebo_to_ros_topic_msg.set_gazebo_topic("~/" + namespace_ + "/" +
+                                                   actuators_pub_topic_);
   connect_gazebo_to_ros_topic_msg.set_ros_topic(namespace_ + "/" +
                                                 actuators_pub_topic_);
   connect_gazebo_to_ros_topic_msg.set_msgtype(
@@ -170,4 +168,4 @@ void GazeboMultirotorBasePlugin::CreatePubsAndSubs() {
 
 GZ_REGISTER_MODEL_PLUGIN(GazeboMultirotorBasePlugin);
 
-}  // namespace gazebo
+} // namespace gazebo
