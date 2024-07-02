@@ -9,6 +9,12 @@
   <xacro:property name="mass" value="1.5" /> <!-- [kg] -->
   <xacro:property name="body_width" value="0.47" /> <!-- [m] -->
   <xacro:property name="body_height" value="0.11" /> <!-- [m] -->
+  <xacro:property name="body_origin_x" value="0.0" /> <!-- [m] -->
+  <xacro:property name="body_origin_y" value="0.0" /> <!-- [m] -->
+  <xacro:property name="body_origin_z" value="0.0" /> <!-- [m] -->
+  <xacro:property name="body_origin_r" value="0.0" /> <!-- [rad] -->
+  <xacro:property name="body_origin_p" value="0.0" /> <!-- [rad] -->
+  <xacro:property name="body_origin_y" value="0.0" /> <!-- [rad] -->
   <xacro:property name="mass_rotor" value="0.005" /> <!-- [kg] -->
   <xacro:property name="arm_length_front_x" value="0.13" /> <!-- [m] -->
   <xacro:property name="arm_length_back_x" value="0.13" /> <!-- [m] -->
@@ -47,8 +53,8 @@
     body_width="${body_width}"
     body_height="${body_height}"
     use_mesh_file="${use_mesh_file}"
-    mesh_file="${mesh_file}"
-    >
+    mesh_file="${mesh_file}">
+    <origin xyz="${body_origin_x} ${body_origin_y} ${body_origin_z}" rpy="${body_origin_r} ${body_origin_p} ${body_origin_y}" />
     <xacro:insert_block name="body_inertia" />
   </xacro:multirotor_base_macro>
 
