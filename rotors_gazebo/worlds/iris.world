@@ -21,7 +21,7 @@
     <plugin name="ros_interface_plugin" filename="librotors_gazebo_ros_interface_plugin.so"/>
 
     <physics name='default_physics' default='0' type='ode'>
-      <gravity>0 0 -9.8066</gravity>
+      <gravity>0 0 -9.8124</gravity>
       <ode>
         <solver>
           <type>quick</type>
