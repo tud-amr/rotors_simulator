@@ -291,7 +291,7 @@ void GazeboImuPlugin::OnUpdate(const common::UpdateInfo& _info) {
   Eigen::Vector3d angular_velocity_I(angular_vel_I.X(), angular_vel_I.Y(),
                                      angular_vel_I.Z());
 
-  AddNoise(&linear_acceleration_I, &angular_velocity_I, dt);
+  // AddNoise(&linear_acceleration_I, &angular_velocity_I, dt);
 
   // Fill IMU message.
   //  imu_message_.header.stamp.sec = current_time.sec;
