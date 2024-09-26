@@ -465,7 +465,7 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
 
       ignition::math::Vector3d rolling_moment;
       // - \omega * \mu_1 * V_A^{\perp}
-      rolling_moment = -std::abs(real_motor_velocity) *
+      rolling_moment = -turning_direction_ * std::abs(real_motor_velocity) *
                        rolling_moment_coefficient_ *
                        body_velocity_perpendicular;
       parent_links.at(0)->AddTorque(rolling_moment);
