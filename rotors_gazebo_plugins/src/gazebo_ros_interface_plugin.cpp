@@ -145,7 +145,7 @@ void GazeboRosInterfacePlugin::ConnectHelper(
 
   // Create ROS publisher
   ros::Publisher ros_publisher =
-      ros_node_handle_->advertise<RosMsgT>(rosTopicName, 1);
+      ros_node_handle_->advertise<RosMsgT>(rosTopicName, 5);
 
   auto callback_entry = callback_map.emplace(
       gazeboTopicName,

@@ -575,7 +575,7 @@ void GazeboOdometryPlugin::CreatePubsAndSubs() {
   // ============================================ //
 
   odometry_pub_ = node_handle_->Advertise<gz_geometry_msgs::Odometry>(
-      "~/" + namespace_ + "/" + odometry_pub_topic_, 1);
+      "~/" + namespace_ + "/" + odometry_pub_topic_, 5);
 
   connect_gazebo_to_ros_topic_msg.set_gazebo_topic("~/" + namespace_ + "/" +
                                                    odometry_pub_topic_);

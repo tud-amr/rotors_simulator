@@ -137,7 +137,7 @@ void GazeboMultirotorBasePlugin::CreatePubsAndSubs() {
   // =========== ACTUATORS MSG SETUP ============ //
   // ============================================ //
   motor_pub_ = node_handle_->Advertise<gz_sensor_msgs::Actuators>(
-      "~/" + namespace_ + "/" + actuators_pub_topic_, 10);
+      "~/" + namespace_ + "/" + actuators_pub_topic_, 5);
 
   // connect_gazebo_to_ros_topic_msg.set_gazebo_namespace(namespace_);
   connect_gazebo_to_ros_topic_msg.set_gazebo_topic("~/" + namespace_ + "/" +
