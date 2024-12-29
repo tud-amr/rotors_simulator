@@ -32,14 +32,14 @@ void Instrumentor::WriteProfile(const ProfileResult& result) {
   std::replace(name.begin(), name.end(), '"', '\'');
 
   m_OutputStream << "    {\n";
-  m_OutputStream << "      \"cat\":\"function\",\n";
-  m_OutputStream << "      \"dur\":" << (result.End - result.Start) << ",\n";
-  m_OutputStream << "      \"name\":\"" << name + " (" + node_name + ")"
+  m_OutputStream << "      \"cat\": \"function\",\n";
+  m_OutputStream << "      \"dur\": " << (result.End - result.Start) << ",\n";
+  m_OutputStream << "      \"name\": \"" << name + " (" + node_name + ")"
                  << "\",\n";
-  m_OutputStream << "      \"ph\":\"X\",\n";
-  m_OutputStream << "      \"pid\":0,\n";
-  m_OutputStream << "      \"tid\":" << result.ThreadID << ",\n";
-  m_OutputStream << "      \"ts\":" << result.Start << "\n";
+  m_OutputStream << "      \"ph\": \"X\",\n";
+  m_OutputStream << "      \"pid\": 0,\n";
+  m_OutputStream << "      \"tid\": " << result.ThreadID << ",\n";
+  m_OutputStream << "      \"ts\": " << result.Start << "\n";
   m_OutputStream << "    }";
 
   m_OutputStream.flush();
