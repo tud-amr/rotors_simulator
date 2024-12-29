@@ -219,6 +219,9 @@ target_link_libraries(mav_msgs ${PROTOBUF_LIBRARY} gazebo_msgs)
 # NOTE: This is deprecated, should be using target_link_libraries instead
 link_libraries(mav_msgs)
 
+# Create a library for the instrumentation timer
+add_library(timer_lib SHARED src/instrumentation_timer.cpp)
+
 # ============================================== #
 # ==================== CATKIN ================== #
 # ============================================== #
@@ -233,7 +236,7 @@ if (NOT NO_ROS)
       DEPENDS Eigen octomap OpenCV
       #CFG_EXTRAS rotors_gazebo_plugins.cmake
     )
-    set(target_linking_LIBRARIES ${catkin_LIBRARIES} ${gazebo_dev_LIBRARIES})
+    set(target_linking_LIBRARIES timer_lib ${catkin_LIBRARIES} ${gazebo_dev_LIBRARIES})
   else()
     catkin_package(
       INCLUDE_DIRS include ${Eigen_INCLUDE_DIRS}
@@ -242,7 +245,7 @@ if (NOT NO_ROS)
       DEPENDS Eigen octomap OpenCV
       #CFG_EXTRAS rotors_gazebo_plugins.cmake
     )
-    set(target_linking_LIBRARIES ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+    set(target_linking_LIBRARIES timer_lib ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
   endif()
 endif()
 
