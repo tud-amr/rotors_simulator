@@ -332,7 +332,7 @@ class GazeboRosInterfacePlugin : public WorldPlugin {
 
   bool first_actuators_msg_callback_{true}, first_imu_msg_callback_{true},
       first_odometry_msg_callback_{true};
-  int init_sleep_time_ms_{1000};
+  int init_sleep_time_ms_{500};
 };
 
 }  // namespace gazebo
