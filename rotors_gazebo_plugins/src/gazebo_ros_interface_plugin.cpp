@@ -16,12 +16,14 @@
 
 // MODULE
 #include <rotors_gazebo_plugins/gazebo_ros_interface_plugin.h>
+#include <rotors_gazebo_plugins/instrumentation_timer.h>
 
 // SYSTEM
 #include <stdio.h>
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <thread>
 
 // 3RD PARTY
 #include <std_msgs/Header.h>
@@ -30,10 +32,12 @@
 namespace gazebo {
 
 GazeboRosInterfacePlugin::GazeboRosInterfacePlugin()
-    : WorldPlugin(), gz_node_handle_(0), ros_node_handle_(0) {}
+    : WorldPlugin(), gz_node_handle_(0), ros_node_handle_(0) {
+      Instrumentor::Get().BeginSession("rotors_gazebo_plugins", "gazebo_node", "rotors_gazebo_plugins_profiler.json");
+    }
 
 GazeboRosInterfacePlugin::~GazeboRosInterfacePlugin() {
-
+  Instrumentor::Get().EndSession();
   // Shutdown and delete ROS node handle
   if (ros_node_handle_) {
     ros_node_handle_->shutdown();
@@ -407,6 +411,10 @@ void GazeboRosInterfacePlugin::GzActuatorsMsgCallback(
   }
 
   // Publish to ROS.
+  if (first_actuators_msg_callback_) {
+    first_actuators_msg_callback_ = false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(init_sleep_time_ms_));
+  }
   ros_publisher.publish(ros_actuators_msg_);
 }
 
@@ -493,6 +501,10 @@ void GazeboRosInterfacePlugin::GzImuMsgCallback(GzImuPtr& gz_imu_msg,
   }
 
   // Publish to ROS.
+  if (first_imu_msg_callback_) {
+    first_imu_msg_callback_ = false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(init_sleep_time_ms_));
+  }
   ros_publisher.publish(ros_imu_msg_);
 }
 
@@ -707,6 +719,10 @@ void GazeboRosInterfacePlugin::GzOdometryMsgCallback(
   }
 
   // Publish to ROS framework.
+  if (first_odometry_msg_callback_) {
+    first_odometry_msg_callback_ = false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(init_sleep_time_ms_));
+  }
   ros_publisher.publish(ros_odometry_msg_);
 }
 
