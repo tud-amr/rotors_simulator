@@ -116,6 +116,14 @@ void GazeboImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
                       imu_parameters_.accelerometer_turn_on_bias_sigma,
                       imu_parameters_.accelerometer_turn_on_bias_sigma);
 
+  if (_sdf->HasElement("randomEngineSeed")) {
+    random_generator_.seed(
+        _sdf->GetElement("randomEngineSeed")->Get<unsigned int>());
+  } else {
+    random_generator_.seed(
+        std::chrono::system_clock::now().time_since_epoch().count());
+  }
+
   last_time_ = world_->SimTime();
 
   // Listen to the update event. This event is broadcast every
