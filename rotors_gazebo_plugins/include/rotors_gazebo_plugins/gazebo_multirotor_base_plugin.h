@@ -42,7 +42,7 @@ namespace gazebo {
 // Default values
 static const std::string kDefaultLinkName = "base_link";
 static const std::string kDefaultFrameId = "base_link";
-static const std::string kDefaultJointStatePubTopic = "joint_states";
+static const std::string kDefaultJointStatePubTopic = "motor_joint_states";
 
 /// \brief This plugin publishes the motor speeds of your multirotor model.
 class GazeboMultirotorBasePlugin : public ModelPlugin {
