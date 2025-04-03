@@ -214,10 +214,20 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
     gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
 
-  if (!pubs_and_subs_created_) {
+  if (pubs_and_subs_created_) {
+    if (step_count_ == 0 && !updated_command_received_) {
+      std::cerr << "GazeboMotorModel::OnUpdate(" << motor_number_ << "): "
+                << "No updated command received!" << std::endl;
+    }
+  } else {
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
   }
+  step_count_++;
+  if (step_count_ >= 5) {
+    step_count_ = 0;
+  }
+  updated_command_received_ = false;
 
   sampling_time_ = _info.simTime.Double() - prev_sim_time_;
   prev_sim_time_ = _info.simTime.Double();
@@ -301,14 +311,14 @@ void GazeboMotorModel::CreatePubsAndSubs() {
       "~/" + namespace_ + "/" + command_sub_topic_,
       &GazeboMotorModel::ControlCommandCallback, this);
 
-  connect_ros_to_gazebo_topic_msg.set_ros_topic(
-      namespace_ + "/" + command_sub_topic_);
-  connect_ros_to_gazebo_topic_msg.set_gazebo_topic(
-      "~/" + namespace_ + "/" + command_sub_topic_);
-  connect_ros_to_gazebo_topic_msg.set_msgtype(
-      gz_std_msgs::ConnectRosToGazeboTopic::COMMAND_MOTOR_SPEED);
-  gz_connect_ros_to_gazebo_topic_pub->Publish(
-      connect_ros_to_gazebo_topic_msg, true);
+  // connect_ros_to_gazebo_topic_msg.set_ros_topic(
+  //     namespace_ + "/" + command_sub_topic_);
+  // connect_ros_to_gazebo_topic_msg.set_gazebo_topic(
+  //     "~/" + namespace_ + "/" + command_sub_topic_);
+  // connect_ros_to_gazebo_topic_msg.set_msgtype(
+  //     gz_std_msgs::ConnectRosToGazeboTopic::COMMAND_MOTOR_SPEED);
+  // gz_connect_ros_to_gazebo_topic_pub->Publish(
+  //     connect_ros_to_gazebo_topic_msg, true);
 
   // ============================================ //
   // ==== WIND SPEED MSG SETUP (ROS->GAZEBO) ==== //
@@ -334,6 +344,7 @@ void GazeboMotorModel::ControlCommandCallback(
   if (kPrintOnMsgCallback) {
     gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
+  updated_command_received_ = true;
 
   if (motor_number_ > command_motor_input_msg->motor_speed_size() - 1) {
     gzerr << "You tried to access index " << motor_number_

@@ -98,7 +98,7 @@ void GazeboControllerInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
   // Frame ID is not used for this particular message
   turning_velocities_msg.mutable_header()->set_frame_id("");
 
-  motor_velocity_reference_pub_->Publish(turning_velocities_msg);
+  // motor_velocity_reference_pub_->Publish(turning_velocities_msg);
 }
 
 void GazeboControllerInterface::CreatePubsAndSubs() {
@@ -121,23 +121,23 @@ void GazeboControllerInterface::CreatePubsAndSubs() {
   // TODO This topic is missing the "~" and is in a completely different
   // namespace, fix?
 
-  gzdbg << "GazeboControllerInterface creating Gazebo publisher on \""
-        << namespace_ + "/" + motor_velocity_reference_pub_topic_ << "\"."
-        << std::endl;
-  motor_velocity_reference_pub_ =
-      node_handle_->Advertise<gz_sensor_msgs::Actuators>(
-          namespace_ + "/" + motor_velocity_reference_pub_topic_, 1);
+  // gzdbg << "GazeboControllerInterface creating Gazebo publisher on \""
+  //       << namespace_ + "/" + motor_velocity_reference_pub_topic_ << "\"."
+  //       << std::endl;
+  // motor_velocity_reference_pub_ =
+  //     node_handle_->Advertise<gz_sensor_msgs::Actuators>(
+  //         namespace_ + "/" + motor_velocity_reference_pub_topic_, 1);
 
-  // Connect to ROS
-  gz_std_msgs::ConnectGazeboToRosTopic connect_gazebo_to_ros_topic_msg;
-  connect_gazebo_to_ros_topic_msg.set_gazebo_topic(
-      namespace_ + "/" + motor_velocity_reference_pub_topic_);
-  connect_gazebo_to_ros_topic_msg.set_ros_topic(
-      namespace_ + "/" + motor_velocity_reference_pub_topic_);
-  connect_gazebo_to_ros_topic_msg.set_msgtype(
-      gz_std_msgs::ConnectGazeboToRosTopic::ACTUATORS);
-  gz_connect_gazebo_to_ros_topic_pub->Publish(connect_gazebo_to_ros_topic_msg,
-                                              true);
+  // // Connect to ROS
+  // gz_std_msgs::ConnectGazeboToRosTopic connect_gazebo_to_ros_topic_msg;
+  // connect_gazebo_to_ros_topic_msg.set_gazebo_topic(
+  //     namespace_ + "/" + motor_velocity_reference_pub_topic_);
+  // connect_gazebo_to_ros_topic_msg.set_ros_topic(
+  //     namespace_ + "/" + motor_velocity_reference_pub_topic_);
+  // connect_gazebo_to_ros_topic_msg.set_msgtype(
+  //     gz_std_msgs::ConnectGazeboToRosTopic::ACTUATORS);
+  // gz_connect_gazebo_to_ros_topic_pub->Publish(connect_gazebo_to_ros_topic_msg,
+  //                                             true);
 
   // ================================================ //
   // ===== MOTOR SPEED MSG SETUP (ROS -> GAZEBO) ==== //

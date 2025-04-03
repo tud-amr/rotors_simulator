@@ -103,6 +103,13 @@ void GazeboRosInterfacePlugin::Load(physics::WorldPtr _world,
   gz_broadcast_transform_sub_ = gz_node_handle_->Subscribe(
       "~/" + kBroadcastTransformSubtopic,
       &GazeboRosInterfacePlugin::GzBroadcastTransformMsgCallback, this);
+
+  step_control_sub_ = ros_node_handle_->subscribe<rotors_comm::StepControl>(
+    "/step_control", 1, &GazeboRosInterfacePlugin::GzStepControlMsgCallback, this);
+  command_motor_speed_pub_ = gz_node_handle_->Advertise<gz_mav_msgs::CommandMotorSpeed>(
+      "~/falcon/gazebo/command/motor_speed", 1);
+  world_control_pub_ = gz_node_handle_->Advertise<gazebo::msgs::WorldControl>(
+      "~/world_control", 1);
 }
 
 void GazeboRosInterfacePlugin::OnUpdate(const common::UpdateInfo& _info) {
@@ -1064,6 +1071,31 @@ void GazeboRosInterfacePlugin::GzBroadcastTransformMsgCallback(
   transform_broadcaster_.sendTransform(tf::StampedTransform(
       tf_, stamp, broadcast_transform_msg->parent_frame_id(),
       broadcast_transform_msg->child_frame_id()));
+}
+
+void GazeboRosInterfacePlugin::GzStepControlMsgCallback(const rotors_comm::StepControl::ConstPtr& step_control_msg)
+{
+  // Send motor commands to Gazebo (motor model plugin)
+  gz_mav_msgs::CommandMotorSpeed gz_command_motor_speed_msg;
+  for (int i = 0; i < step_control_msg->angular_velocities.size(); i++) {
+    gz_command_motor_speed_msg.add_motor_speed(
+      step_control_msg->angular_velocities[i]);
+  }
+  command_motor_speed_pub_->Publish(gz_command_motor_speed_msg);
+
+  // Sleep to let the motor speed command messages arrive before updating the world
+  std::this_thread::sleep_for(std::chrono::microseconds(1));
+
+  // Unpause Gazebo world for 0 steps / pause for >=1 steps
+  gazebo::msgs::WorldControl step_msg;
+  bool to_pause = (step_control_msg->steps >= 1);
+  step_msg.set_pause(to_pause);
+  if (step_control_msg->steps > 1) {
+    step_msg.set_multi_step(step_control_msg->steps);
+  } else {
+    step_msg.set_step(step_control_msg->steps == 1);
+  }
+  world_control_pub_->Publish(step_msg);
 }
 
 GZ_REGISTER_WORLD_PLUGIN(GazeboRosInterfacePlugin);

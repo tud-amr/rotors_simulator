@@ -66,6 +66,7 @@
 #include <mav_msgs/Actuators.h>
 #include <mav_msgs/RollPitchYawrateThrust.h>
 #include <nav_msgs/Odometry.h>
+#include <rotors_comm/StepControl.h>
 #include <rotors_comm/WindSpeed.h>
 #include <sensor_msgs/FluidPressure.h>
 #include <sensor_msgs/Imu.h>
@@ -326,6 +327,11 @@ class GazeboRosInterfacePlugin : public WorldPlugin {
   ///           transform_broadcast()).
   void GzBroadcastTransformMsgCallback(
       GzTransformStampedWithFrameIdsMsgPtr& broadcast_transform_msg);
+
+  // To first send motor commands, then step the world
+  void GzStepControlMsgCallback(const rotors_comm::StepControl::ConstPtr& step_control_msg);
+  ros::Subscriber step_control_sub_;
+  gazebo::transport::PublisherPtr command_motor_speed_pub_, world_control_pub_;
 
   tf::Transform tf_;
   tf::TransformBroadcaster transform_broadcaster_;

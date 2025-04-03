@@ -98,7 +98,9 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
         time_constant_up_(kDefaultTimeConstantUp),
         node_handle_(nullptr),
         wind_speed_W_(0, 0, 0),
-        pubs_and_subs_created_(false) {}
+        pubs_and_subs_created_(false),
+        step_count_(0),
+        updated_command_received_(false) {}
 
   virtual ~GazeboMotorModel();
 
@@ -187,6 +189,9 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
 
   std::unique_ptr<FirstOrderFilter<double>> rotor_velocity_filter_;
   ignition::math::Vector3d wind_speed_W_;
+
+  int step_count_;
+  bool updated_command_received_;
 };
 
 } // namespace gazebo {
