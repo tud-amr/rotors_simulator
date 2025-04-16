@@ -40,6 +40,14 @@
 #include "TransformStampedWithFrameIds.pb.h"
 #include "Vector3dStamped.pb.h"
 
+Eigen::VectorXd RandomUniformGenerator::generate() {
+    Eigen::VectorXd result(mean_.size());
+    for (int i = 0; i < mean_.size(); ++i) {
+        result[i] = mean_[i] + stddev_[i] * standard_uniform_distribution_(generator_);
+    }
+    return result;
+}
+
 namespace gazebo {
 
 GazeboOdometryPlugin::~GazeboOdometryPlugin() {
@@ -99,12 +107,12 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   }
 
   if (_sdf->HasElement("randomEngineSeed")) {
-    random_generator_.seed(
-        _sdf->GetElement("randomEngineSeed")->Get<unsigned int>());
+    seed_ = _sdf->GetElement("randomEngineSeed")->Get<unsigned int>();
   } else {
-    random_generator_.seed(
-        std::chrono::system_clock::now().time_since_epoch().count());
+    seed_ = std::chrono::system_clock::now().time_since_epoch().count();
   }
+  random_generator_.seed(seed_);
+
   getSdfParam<std::string>(_sdf, "poseTopic", pose_pub_topic_, pose_pub_topic_);
   getSdfParam<std::string>(_sdf, "poseWithCovarianceTopic",
                            pose_with_covariance_stamped_pub_topic_,
@@ -142,6 +150,17 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   getSdfParam<double>(_sdf, "unknownDelay", unknown_delay_, unknown_delay_);
   getSdfParam<double>(_sdf, "covarianceImageScale", covariance_image_scale_,
                       covariance_image_scale_);
+
+  random_u_generator_.setSeed(seed_);
+  random_u_generator_.setMean(Eigen::VectorXd::Zero(12));
+  Eigen::VectorXd stddev(12);
+  stddev << noise_uniform_position.X(), noise_uniform_position.Y(),
+      noise_uniform_position.Z(), noise_uniform_quaternion.X(),
+      noise_uniform_quaternion.Y(), noise_uniform_quaternion.Z(),
+      noise_uniform_linear_velocity.X(), noise_uniform_linear_velocity.Y(),
+      noise_uniform_linear_velocity.Z(), noise_uniform_angular_velocity.X(),
+      noise_uniform_angular_velocity.Y(), noise_uniform_angular_velocity.Z();
+  random_u_generator_.setStddev(stddev);
 
   parent_link_ = world_->EntityByName(parent_frame_id_);
   if (parent_link_ == NULL && parent_frame_id_ != kDefaultParentFrameId) {
@@ -358,12 +377,16 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
     // Now that we have copied the first element from the queue, remove it.
     odometry_queue_.pop_front();
 
+    // Compute measurement noise
+    Eigen::VectorXd meas_noise = random_u_generator_.generate();
+
     // Calculate position distortions.
     Eigen::Vector3d pos_n;
-    pos_n << position_n_[0](random_generator_) +
-                 position_u_[0](random_generator_),
-        position_n_[1](random_generator_) + position_u_[1](random_generator_),
-        position_n_[2](random_generator_) + position_u_[2](random_generator_);
+    // pos_n << position_n_[0](random_generator_) +
+    //              position_u_[0](random_generator_),
+    //     position_n_[1](random_generator_) + position_u_[1](random_generator_),
+    //     position_n_[2](random_generator_) + position_u_[2](random_generator_);
+    pos_n = meas_noise.head(3);
 
     gazebo::msgs::Vector3d* p =
         odometry_msg.mutable_pose()->mutable_pose()->mutable_position();
@@ -373,10 +396,11 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
     // Calculate attitude distortions.
     Eigen::Vector3d theta;
-    theta << attitude_n_[0](random_generator_) +
-                 attitude_u_[0](random_generator_),
-        attitude_n_[1](random_generator_) + attitude_u_[1](random_generator_),
-        attitude_n_[2](random_generator_) + attitude_u_[2](random_generator_);
+    // theta << attitude_n_[0](random_generator_) +
+    //              attitude_u_[0](random_generator_),
+    //     attitude_n_[1](random_generator_) + attitude_u_[1](random_generator_),
+    //     attitude_n_[2](random_generator_) + attitude_u_[2](random_generator_);
+    theta = meas_noise.segment(3, 3);
     Eigen::Quaterniond q_n = QuaternionFromSmallAngle(theta);
     q_n.normalize();
 
@@ -392,12 +416,13 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
     // Calculate linear velocity distortions.
     Eigen::Vector3d linear_velocity_n;
-    linear_velocity_n << linear_velocity_n_[0](random_generator_) +
-                             linear_velocity_u_[0](random_generator_),
-        linear_velocity_n_[1](random_generator_) +
-            linear_velocity_u_[1](random_generator_),
-        linear_velocity_n_[2](random_generator_) +
-            linear_velocity_u_[2](random_generator_);
+    // linear_velocity_n << linear_velocity_n_[0](random_generator_) +
+    //                          linear_velocity_u_[0](random_generator_),
+    //     linear_velocity_n_[1](random_generator_) +
+    //         linear_velocity_u_[1](random_generator_),
+    //     linear_velocity_n_[2](random_generator_) +
+    //         linear_velocity_u_[2](random_generator_);
+    linear_velocity_n = meas_noise.segment(6, 3);
 
     gazebo::msgs::Vector3d* linear_velocity =
         odometry_msg.mutable_twist()->mutable_twist()->mutable_linear();
@@ -408,12 +433,13 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
 
     // Calculate angular velocity distortions.
     Eigen::Vector3d angular_velocity_n;
-    angular_velocity_n << angular_velocity_n_[0](random_generator_) +
-                              angular_velocity_u_[0](random_generator_),
-        angular_velocity_n_[1](random_generator_) +
-            angular_velocity_u_[1](random_generator_),
-        angular_velocity_n_[2](random_generator_) +
-            angular_velocity_u_[2](random_generator_);
+    // angular_velocity_n << angular_velocity_n_[0](random_generator_) +
+    //                           angular_velocity_u_[0](random_generator_),
+    //     angular_velocity_n_[1](random_generator_) +
+    //         angular_velocity_u_[1](random_generator_),
+    //     angular_velocity_n_[2](random_generator_) +
+    //         angular_velocity_u_[2](random_generator_);
+    angular_velocity_n = meas_noise.tail(3);
 
     gazebo::msgs::Vector3d* angular_velocity =
         odometry_msg.mutable_twist()->mutable_twist()->mutable_angular();

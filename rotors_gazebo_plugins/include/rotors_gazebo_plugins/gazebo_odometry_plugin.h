@@ -43,6 +43,20 @@
 
 #include "Odometry.pb.h"
 
+class RandomUniformGenerator {
+public:
+    RandomUniformGenerator() {};
+    ~RandomUniformGenerator(){};
+    void setSeed(int seed) { generator_.seed(seed); }
+    void setMean(const Eigen::VectorXd& mean) { mean_ = mean; }
+    void setStddev(const Eigen::VectorXd& stddev) { stddev_ = stddev; }
+    Eigen::VectorXd generate();
+private:
+    std::mt19937 generator_;
+    std::uniform_real_distribution<double> standard_uniform_distribution_ = std::uniform_real_distribution<double>(-1.0, 1.0);
+    Eigen::VectorXd mean_;
+    Eigen::VectorXd stddev_;
+};
 
 namespace gazebo {
 
@@ -127,6 +141,9 @@ class GazeboOdometryPlugin : public ModelPlugin {
   UniformDistribution attitude_u_[3];
   UniformDistribution linear_velocity_u_[3];
   UniformDistribution angular_velocity_u_[3];
+
+  int seed_;
+  RandomUniformGenerator random_u_generator_;
 
   CovarianceMatrix pose_covariance_matrix_;
   CovarianceMatrix twist_covariance_matrix_;
