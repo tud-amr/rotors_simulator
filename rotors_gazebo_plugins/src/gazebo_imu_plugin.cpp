@@ -115,7 +115,7 @@ void GazeboImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   getSdfParam<double>(_sdf, "accelerometerTurnOnBiasSigma",
                       imu_parameters_.accelerometer_turn_on_bias_sigma,
                       imu_parameters_.accelerometer_turn_on_bias_sigma);
-
+  getSdfParam<bool>(_sdf, "addNoise", add_noise_, false);
   if (_sdf->HasElement("randomEngineSeed")) {
     random_generator_.seed(
         _sdf->GetElement("randomEngineSeed")->Get<unsigned int>());
@@ -299,7 +299,9 @@ void GazeboImuPlugin::OnUpdate(const common::UpdateInfo& _info) {
   Eigen::Vector3d angular_velocity_I(angular_vel_I.X(), angular_vel_I.Y(),
                                      angular_vel_I.Z());
 
-  // AddNoise(&linear_acceleration_I, &angular_velocity_I, dt);
+  if (add_noise_) {
+    AddNoise(&linear_acceleration_I, &angular_velocity_I, dt);
+  }
 
   // Fill IMU message.
   //  imu_message_.header.stamp.sec = current_time.sec;

@@ -142,8 +142,10 @@ class GazeboOdometryPlugin : public ModelPlugin {
   UniformDistribution linear_velocity_u_[3];
   UniformDistribution angular_velocity_u_[3];
 
+  bool add_noise_;
   int seed_;
   RandomUniformGenerator random_u_generator_;
+  Eigen::VectorXd meas_noise_;
 
   CovarianceMatrix pose_covariance_matrix_;
   CovarianceMatrix twist_covariance_matrix_;
