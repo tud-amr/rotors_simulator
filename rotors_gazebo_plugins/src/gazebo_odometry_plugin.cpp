@@ -384,7 +384,6 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
     } else {
         meas_noise_ = Eigen::VectorXd::Zero(12);
     }
-    std::cout << "meas_noise_: " << meas_noise_.transpose() << std::endl;
 
     // Calculate position distortions.
     Eigen::Vector3d pos_n;
