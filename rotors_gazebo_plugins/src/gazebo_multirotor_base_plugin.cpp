@@ -67,6 +67,10 @@ void GazeboMultirotorBasePlugin::Load(physics::ModelPtr _model,
   update_connection_ = event::Events::ConnectWorldUpdateBegin(
       boost::bind(&GazeboMultirotorBasePlugin::OnUpdate, this, _1));
 
+  worldUpdateEndConnection_ =
+    event::Events::ConnectWorldUpdateEnd(
+        boost::bind(&GazeboMultirotorBasePlugin::OnWorldUpdateEnd, this));
+
   child_links_ = link_->GetChildJointsLinks();
   for (unsigned int i = 0; i < child_links_.size(); i++) {
     std::string link_name = child_links_[i]->GetScopedName();
@@ -92,6 +96,12 @@ void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo &_info) {
   if (!pubs_and_subs_created_) {
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
+  }
+}
+
+void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
+  if (kPrintOnUpdates) {
+    gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
 
   // Get the current simulation time.

@@ -108,6 +108,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
  protected:
   void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
   void OnUpdate(const common::UpdateInfo& /*_info*/);
+  void OnWorldUpdateEnd();
 
  private:
 
@@ -181,7 +182,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
   physics::EntityPtr parent_link_;
 
   /// \brief    Pointer to the update event connection.
-  event::ConnectionPtr updateConnection_;
+  event::ConnectionPtr updateConnection_, worldUpdateEndConnection_;
 
   boost::thread callback_queue_thread_;
   void QueueThread();

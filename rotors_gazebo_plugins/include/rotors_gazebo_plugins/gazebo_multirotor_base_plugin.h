@@ -73,6 +73,9 @@ class GazeboMultirotorBasePlugin : public ModelPlugin {
   /// \param[in] _info Update timing information.
   void OnUpdate(const common::UpdateInfo& /*_info*/);
 
+  /// \brief Called after the world has updated.
+  void OnWorldUpdateEnd();
+
  private:
 
   /// \brief    Flag that is set to true once CreatePubsAndSubs() is called, used
@@ -86,7 +89,7 @@ class GazeboMultirotorBasePlugin : public ModelPlugin {
   void CreatePubsAndSubs();
 
   /// \brief Pointer to the update event connection.
-  event::ConnectionPtr update_connection_;
+  event::ConnectionPtr update_connection_, worldUpdateEndConnection_;
 
   physics::WorldPtr world_;
   physics::ModelPtr model_;

@@ -250,6 +250,8 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   // simulation iteration.
   updateConnection_ = event::Events::ConnectWorldUpdateBegin(
       boost::bind(&GazeboOdometryPlugin::OnUpdate, this, _1));
+  worldUpdateEndConnection_ = event::Events::ConnectWorldUpdateEnd(
+    boost::bind(&GazeboOdometryPlugin::OnWorldUpdateEnd, this));
 }
 
 // This gets called by the world update start event.
@@ -261,6 +263,14 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
   if (!pubs_and_subs_created_) {
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
+  }
+}
+
+void GazeboOdometryPlugin::OnWorldUpdateEnd() {
+  // This is called after the physics update.
+  // We can use this to publish the odometry message.
+  if (kPrintOnUpdates) {
+    gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
 
   // C denotes child frame, P parent frame, and W world frame.
