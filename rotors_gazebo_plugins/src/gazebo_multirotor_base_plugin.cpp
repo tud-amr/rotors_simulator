@@ -85,6 +85,11 @@ void GazeboMultirotorBasePlugin::Load(physics::ModelPtr _model,
       motor_joints_.insert(MotorNumberToJointPair(motor_number, joint));
     }
   }
+
+  ros_node_handle_ = new ros::NodeHandle();
+  ros_motor_speed_pub_ = ros_node_handle_->advertise<mav_msgs::Actuators>(
+      "/falcon/motor_speed", 1);
+  ros_motor_speed_msg_.angular_velocities.resize(motor_joints_.size());
 }
 
 // This gets called by the world update start event.
@@ -93,10 +98,10 @@ void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo &_info) {
     gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
 
-  if (!pubs_and_subs_created_) {
-    CreatePubsAndSubs();
-    pubs_and_subs_created_ = true;
-  }
+  // if (!pubs_and_subs_created_) {
+  //   CreatePubsAndSubs();
+  //   pubs_and_subs_created_ = true;
+  // }
 }
 
 void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
@@ -107,32 +112,43 @@ void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
   // Get the current simulation time.
   common::Time now = world_->SimTime();
 
-  actuators_msg_.mutable_header()->mutable_stamp()->set_sec(now.sec);
-  actuators_msg_.mutable_header()->mutable_stamp()->set_nsec(now.nsec);
-  actuators_msg_.mutable_header()->set_frame_id(frame_id_);
+  // actuators_msg_.mutable_header()->mutable_stamp()->set_sec(now.sec);
+  // actuators_msg_.mutable_header()->mutable_stamp()->set_nsec(now.nsec);
+  // actuators_msg_.mutable_header()->set_frame_id(frame_id_);
 
-  joint_state_msg_.mutable_header()->mutable_stamp()->set_sec(now.sec);
-  joint_state_msg_.mutable_header()->mutable_stamp()->set_nsec(now.nsec);
-  joint_state_msg_.mutable_header()->set_frame_id(frame_id_);
+  // joint_state_msg_.mutable_header()->mutable_stamp()->set_sec(now.sec);
+  // joint_state_msg_.mutable_header()->mutable_stamp()->set_nsec(now.nsec);
+  // joint_state_msg_.mutable_header()->set_frame_id(frame_id_);
 
-  actuators_msg_.clear_angular_velocities();
+  // actuators_msg_.clear_angular_velocities();
 
-  joint_state_msg_.clear_name();
-  joint_state_msg_.clear_position();
+  // joint_state_msg_.clear_name();
+  // joint_state_msg_.clear_position();
 
-  MotorNumberToJointMap::iterator m;
-  for (m = motor_joints_.begin(); m != motor_joints_.end(); ++m) {
-    double motor_rot_vel =
-        m->second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
+  // MotorNumberToJointMap::iterator m;
+  // for (m = motor_joints_.begin(); m != motor_joints_.end(); ++m) {
+  //   double motor_rot_vel =
+  //       m->second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
 
-    actuators_msg_.add_angular_velocities(motor_rot_vel);
+  //   actuators_msg_.add_angular_velocities(motor_rot_vel);
 
-    joint_state_msg_.add_name(m->second->GetName());
-    joint_state_msg_.add_position(m->second->Position(0));
+  //   joint_state_msg_.add_name(m->second->GetName());
+  //   joint_state_msg_.add_position(m->second->Position(0));
+  // }
+
+  // joint_state_pub_->Publish(joint_state_msg_);
+  // motor_pub_->Publish(actuators_msg_);
+
+  // Note: these motor velocities are incorrect as they reflect the velocities of the joints at the start of a simulation step, not at the end of the step as indicated by their timestamp
+  ros_motor_speed_msg_.header.frame_id = frame_id_;
+  ros_motor_speed_msg_.header.stamp.sec = now.sec;
+  ros_motor_speed_msg_.header.stamp.nsec = now.nsec;
+  int idx = 0;
+  for (auto& motor_joint : motor_joints_) {
+    ros_motor_speed_msg_.angular_velocities[idx] = motor_joint.second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
+    idx++;
   }
-
-  joint_state_pub_->Publish(joint_state_msg_);
-  motor_pub_->Publish(actuators_msg_);
+  ros_motor_speed_pub_.publish(ros_motor_speed_msg_);
 }
 
 void GazeboMultirotorBasePlugin::CreatePubsAndSubs() {

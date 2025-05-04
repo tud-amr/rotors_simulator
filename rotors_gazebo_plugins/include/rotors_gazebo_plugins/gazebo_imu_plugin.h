@@ -34,6 +34,9 @@
 
 #include "rotors_gazebo_plugins/common.h"
 
+#include <ros/ros.h>
+#include <sensor_msgs/Imu.h>
+
 namespace gazebo {
 
 // Default values for use with ADIS16448 IMU
@@ -117,6 +120,8 @@ class GazeboImuPlugin : public ModelPlugin {
   /// \details	Calculates IMU parameters and then publishes one IMU message.
   void OnUpdate(const common::UpdateInfo&);
 
+  void OnWorldUpdateEnd();
+
  private:
 
   /// \brief    Flag that is set to true once CreatePubsAndSubs() is called, used
@@ -128,6 +133,11 @@ class GazeboImuPlugin : public ModelPlugin {
   ///           be called from Load() because there is no guarantee GazeboRosInterfacePlugin has
   ///           has loaded and listening to ConnectGazeboToRosTopic and ConnectRosToGazeboTopic messages).
   void CreatePubsAndSubs();
+
+  /// \brief  Handle for the ROS node.
+  ros::NodeHandle* ros_node_handle_;
+  ros::Publisher ros_imu_pub_;
+  sensor_msgs::Imu ros_imu_msg_;
 
 
   std::string namespace_;
@@ -154,7 +164,7 @@ class GazeboImuPlugin : public ModelPlugin {
   physics::LinkPtr link_;
 
   /// \brief    Pointer to the update event connection.
-  event::ConnectionPtr updateConnection_;
+  event::ConnectionPtr updateConnection_, worldUpdateEndConnection_;
 
   common::Time last_time_;
 

@@ -37,6 +37,9 @@
 
 #include "rotors_gazebo_plugins/common.h"
 
+#include <ros/ros.h>
+#include <mav_msgs/Actuators.h>
+
 namespace gazebo {
 
 // Default values
@@ -87,6 +90,11 @@ class GazeboMultirotorBasePlugin : public ModelPlugin {
   ///           be called from Load() because there is no guarantee GazeboRosInterfacePlugin has
   ///           has loaded and listening to ConnectGazeboToRosTopic and ConnectRosToGazeboTopic messages).
   void CreatePubsAndSubs();
+
+  /// \brief  Handle for the ROS node.
+  ros::NodeHandle* ros_node_handle_;
+  ros::Publisher ros_motor_speed_pub_;
+  mav_msgs::Actuators ros_motor_speed_msg_;
 
   /// \brief Pointer to the update event connection.
   event::ConnectionPtr update_connection_, worldUpdateEndConnection_;

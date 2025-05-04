@@ -43,6 +43,9 @@
 
 #include "Odometry.pb.h"
 
+#include <ros/ros.h>
+#include <nav_msgs/Odometry.h>
+
 class RandomUniformGenerator {
 public:
     RandomUniformGenerator() {};
@@ -121,6 +124,11 @@ class GazeboOdometryPlugin : public ModelPlugin {
   ///           be called from Load() because there is no guarantee GazeboRosInterfacePlugin has
   ///           has loaded and listening to ConnectGazeboToRosTopic and ConnectRosToGazeboTopic messages).
   void CreatePubsAndSubs();
+
+  /// \brief  Handle for the ROS node.
+  ros::NodeHandle* ros_node_handle_;
+  ros::Publisher ros_odometry_pub_;
+  nav_msgs::Odometry ros_odometry_msg_;
 
   OdometryQueue odometry_queue_;
 
