@@ -102,6 +102,20 @@ void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo &_info) {
   //   CreatePubsAndSubs();
   //   pubs_and_subs_created_ = true;
   // }
+
+  // Get the current simulation time.
+  common::Time now = world_->SimTime();
+
+  // Note: these motor velocities are incorrect as they reflect the velocities of the joints at the start of a simulation step, not at the end of the step as indicated by their timestamp
+  ros_motor_speed_msg_.header.frame_id = frame_id_;
+  ros_motor_speed_msg_.header.stamp.sec = now.sec;
+  ros_motor_speed_msg_.header.stamp.nsec = now.nsec;
+  int idx = 0;
+  for (auto& motor_joint : motor_joints_) {
+    ros_motor_speed_msg_.angular_velocities[idx] = motor_joint.second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
+    idx++;
+  }
+  ros_motor_speed_pub_.publish(ros_motor_speed_msg_);
 }
 
 void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
@@ -109,8 +123,8 @@ void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
     gzdbg << __FUNCTION__ << "() called." << std::endl;
   }
 
-  // Get the current simulation time.
-  common::Time now = world_->SimTime();
+  // // Get the current simulation time.
+  // common::Time now = world_->SimTime();
 
   // actuators_msg_.mutable_header()->mutable_stamp()->set_sec(now.sec);
   // actuators_msg_.mutable_header()->mutable_stamp()->set_nsec(now.nsec);
@@ -139,16 +153,16 @@ void GazeboMultirotorBasePlugin::OnWorldUpdateEnd() {
   // joint_state_pub_->Publish(joint_state_msg_);
   // motor_pub_->Publish(actuators_msg_);
 
-  // Note: these motor velocities are incorrect as they reflect the velocities of the joints at the start of a simulation step, not at the end of the step as indicated by their timestamp
-  ros_motor_speed_msg_.header.frame_id = frame_id_;
-  ros_motor_speed_msg_.header.stamp.sec = now.sec;
-  ros_motor_speed_msg_.header.stamp.nsec = now.nsec;
-  int idx = 0;
-  for (auto& motor_joint : motor_joints_) {
-    ros_motor_speed_msg_.angular_velocities[idx] = motor_joint.second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
-    idx++;
-  }
-  ros_motor_speed_pub_.publish(ros_motor_speed_msg_);
+  // // Note: these motor velocities reflect the velocities of the joints after the physics update
+  // ros_motor_speed_msg_.header.frame_id = frame_id_;
+  // ros_motor_speed_msg_.header.stamp.sec = now.sec;
+  // ros_motor_speed_msg_.header.stamp.nsec = now.nsec;
+  // int idx = 0;
+  // for (auto& motor_joint : motor_joints_) {
+  //   ros_motor_speed_msg_.angular_velocities[idx] = motor_joint.second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
+  //   idx++;
+  // }
+  // ros_motor_speed_pub_.publish(ros_motor_speed_msg_);
 }
 
 void GazeboMultirotorBasePlugin::CreatePubsAndSubs() {
