@@ -257,6 +257,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   ros_node_handle_ = new ros::NodeHandle();
   ros_odometry_pub_ = ros_node_handle_->advertise<nav_msgs::Odometry>(
       "/falcon/ground_truth/odometry", 1);
+  meas_noise_pub_ = ros_node_handle_->advertise<rotors_comm::DroneFalconOutput>("/eta", 1);
 }
 
 // This gets called by the world update start event.
@@ -642,6 +643,20 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
       gazebo_angular_velocity.Z() + meas_noise_(11);
 
   ros_odometry_pub_.publish(ros_odometry_msg_);
+
+  if (add_noise_) {
+    meas_noise_msg_.header.frame_id = parent_frame_id_;
+    meas_noise_msg_.header.stamp.sec = (world_->SimTime()).sec;
+    meas_noise_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
+    ros_odometry_msg_.child_frame_id = child_frame_id_;
+
+    meas_noise_msg_.y.resize(12);
+    for (int i = 0; i < 12; ++i) {
+      meas_noise_msg_.y[i] = meas_noise_(i);
+    }
+
+    meas_noise_pub_.publish(meas_noise_msg_);
+  }
 }
 
 void GazeboOdometryPlugin::CreatePubsAndSubs() {

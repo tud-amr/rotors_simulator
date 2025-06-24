@@ -44,6 +44,7 @@
 #include "Odometry.pb.h"
 
 #include <ros/ros.h>
+#include <rotors_comm/DroneFalconOutput.h>
 #include <nav_msgs/Odometry.h>
 
 class RandomUniformGenerator {
@@ -127,7 +128,8 @@ class GazeboOdometryPlugin : public ModelPlugin {
 
   /// \brief  Handle for the ROS node.
   ros::NodeHandle* ros_node_handle_;
-  ros::Publisher ros_odometry_pub_;
+  ros::Publisher ros_odometry_pub_, meas_noise_pub_;
+  rotors_comm::DroneFalconOutput meas_noise_msg_;
   nav_msgs::Odometry ros_odometry_msg_;
 
   OdometryQueue odometry_queue_;
