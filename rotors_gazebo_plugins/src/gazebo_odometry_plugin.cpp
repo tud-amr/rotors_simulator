@@ -24,6 +24,7 @@
 
 // SYSTEM
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 // 3RD PARTY
@@ -601,14 +602,36 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
       meas_noise_ = Eigen::VectorXd::Zero(12);
   }
 
-  // Calculate measurement noise on quaternion
-  Eigen::Vector3d theta = meas_noise_.segment(3, 3);
-  Eigen::Quaterniond q_n = QuaternionFromSmallAngle(theta);
-  q_n.normalize();
-  Eigen::Quaterniond q_W_L(gazebo_pose.Rot().W(), gazebo_pose.Rot().X(),
-                            gazebo_pose.Rot().Y(), gazebo_pose.Rot().Z());
-  q_W_L = q_W_L * q_n;
-  q_W_L.normalize();
+  // Get current quaternion
+  ignition::math::Quaternion<double> gazebo_quaternion =
+      ignition::math::Quaternion<double>(gazebo_pose.Rot().W(), gazebo_pose.Rot().X(),
+                                 gazebo_pose.Rot().Y(), gazebo_pose.Rot().Z());
+
+  // Convert Ignition quaternion to XYZ fixed angles
+  // By default, Ignition orientation are defined as XYZ angles, although called Euler angles
+  // (= ZYX Euler angles with X=X, Y=Y, Z=Z, same orientation is obtained by rotating X around fixed X, Y around fixed Y, and Z around fixed Z, as rotating Z around original Z, Y around rotated Y, and X around rotated X)
+  ignition::math::Vector3d euler_angles = gazebo_quaternion.Euler();
+
+  // Add noise to XYZ fixed angles
+  euler_angles.X() += meas_noise_(3); // Roll
+  euler_angles.Y() += meas_noise_(4); // Pitch
+  euler_angles.Z() += meas_noise_(5); // Yaw
+
+  // Convert XYZ fixed angles to Ignition quaternion
+  gazebo_quaternion = ignition::math::Quaternion<double>(euler_angles.X(), euler_angles.Y(), euler_angles.Z());
+
+  // Convert Ignition quaternion to Eigen quaternion
+  Eigen::Quaterniond gazebo_quaternion_eigen(gazebo_quaternion.W(), gazebo_quaternion.X(),
+                                             gazebo_quaternion.Y(), gazebo_quaternion.Z());
+
+  // // Calculate measurement noise on quaternion
+  // Eigen::Vector3d theta = meas_noise_.segment(3, 3);
+  // Eigen::Quaterniond q_n = QuaternionFromSmallAngle(theta);
+  // q_n.normalize();
+  // Eigen::Quaterniond q_W_L(gazebo_pose.Rot().W(), gazebo_pose.Rot().X(),
+  //                           gazebo_pose.Rot().Y(), gazebo_pose.Rot().Z());
+  // q_W_L = q_W_L * q_n;
+  // q_W_L.normalize();
 
   ros_odometry_msg_.header.frame_id = parent_frame_id_;
   ros_odometry_msg_.header.stamp.sec = (world_->SimTime()).sec;
@@ -621,14 +644,14 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
       gazebo_pose.Pos().Y() + meas_noise_(1);
   ros_odometry_msg_.pose.pose.position.z =
       gazebo_pose.Pos().Z() + meas_noise_(2);
-  ros_odometry_msg_.pose.pose.orientation.w =
-      q_W_L.w();
+  ros_odometry_msg_.pose.pose.orientation.w = 
+      gazebo_quaternion_eigen.w();
   ros_odometry_msg_.pose.pose.orientation.x =
-      q_W_L.x();
+    gazebo_quaternion_eigen.x();
   ros_odometry_msg_.pose.pose.orientation.y =
-      q_W_L.y();
+    gazebo_quaternion_eigen.y();
   ros_odometry_msg_.pose.pose.orientation.z =
-      q_W_L.z();
+    gazebo_quaternion_eigen.z();
   ros_odometry_msg_.twist.twist.linear.x =
       gazebo_linear_velocity.X() + meas_noise_(6);
   ros_odometry_msg_.twist.twist.linear.y =
