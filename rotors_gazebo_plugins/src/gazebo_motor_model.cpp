@@ -434,9 +434,11 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
       // Make sure max force is set, as it may be reset to 0 by a world reset any
       // time. (This cannot be done during Reset() because the change will be undone
       // by the Joint's reset function afterwards.)
+      // joint_->SetVelocity(
+      //     0, turning_direction_ * ref_motor_rot_vel /
+      //            rotor_velocity_slowdown_sim_);
       joint_->SetVelocity(
-          0, turning_direction_ * ref_motor_rot_vel /
-                 rotor_velocity_slowdown_sim_);
+        0, 0);
 
       motor_rot_vel_ = joint_->GetVelocity(0);
       if (motor_rot_vel_ / (2 * M_PI) > 1 / (2 * sampling_time_)) {
@@ -444,8 +446,9 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
               << "] might occur. Consider making smaller simulation time "
                  "steps or raising the rotor_velocity_slowdown_sim_ param.\n";
       }
-      double real_motor_velocity =
-          motor_rot_vel_ * rotor_velocity_slowdown_sim_;
+      // double real_motor_velocity =
+      //     motor_rot_vel_ * rotor_velocity_slowdown_sim_;
+      double real_motor_velocity = turning_direction_ * ref_motor_input_;
       // Get the direction of the rotor rotation.
       int real_motor_velocity_sign =
           (real_motor_velocity > 0) - (real_motor_velocity < 0);
