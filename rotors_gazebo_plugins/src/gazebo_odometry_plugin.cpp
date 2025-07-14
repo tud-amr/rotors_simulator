@@ -563,9 +563,10 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
   ignition::math::Pose3d W_pose_W_C = link_->WorldCoGPose();
   ignition::math::Vector3d C_linear_velocity_W_C = link_->RelativeLinearVel();
+  ignition::math::Vector3d W_linear_velocity_W_C = link_->WorldCoGLinearVel();
   ignition::math::Vector3d C_angular_velocity_W_C = link_->RelativeAngularVel();
 
-  ignition::math::Vector3d gazebo_linear_velocity = C_linear_velocity_W_C;
+  ignition::math::Vector3d gazebo_linear_velocity = W_linear_velocity_W_C;
   ignition::math::Vector3d gazebo_angular_velocity = C_angular_velocity_W_C;
   ignition::math::Pose3d gazebo_pose = W_pose_W_C;
 
@@ -638,6 +639,7 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
   ros_odometry_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
   ros_odometry_msg_.child_frame_id = child_frame_id_;
 
+  // NOTE: linear velocities are given in inertial frame, which is in contrast to the ROS standard!
   ros_odometry_msg_.pose.pose.position.x = 
       gazebo_pose.Pos().X() + meas_noise_(0);
   ros_odometry_msg_.pose.pose.position.y =
