@@ -128,9 +128,9 @@ class GazeboOdometryPlugin : public ModelPlugin {
 
   /// \brief  Handle for the ROS node.
   ros::NodeHandle* ros_node_handle_;
-  ros::Publisher ros_odometry_pub_, meas_noise_pub_;
+  ros::Publisher ros_odometry_output_pub_, ros_odometry_state_pub_, meas_noise_pub_;
   rotors_comm::DroneFalconOutput meas_noise_msg_;
-  nav_msgs::Odometry ros_odometry_msg_;
+  nav_msgs::Odometry ros_odometry_output_msg_, ros_odometry_state_msg_;
 
   OdometryQueue odometry_queue_;
 

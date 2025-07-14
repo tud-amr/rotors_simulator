@@ -256,7 +256,9 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
 
   // Create ROS node here to speed up publishing of ROS message
   ros_node_handle_ = new ros::NodeHandle();
-  ros_odometry_pub_ = ros_node_handle_->advertise<nav_msgs::Odometry>(
+  ros_odometry_output_pub_ = ros_node_handle_->advertise<nav_msgs::Odometry>(
+      "/falcon/odometry", 1);
+  ros_odometry_state_pub_ = ros_node_handle_->advertise<nav_msgs::Odometry>(
       "/falcon/ground_truth/odometry", 1);
   meas_noise_pub_ = ros_node_handle_->advertise<rotors_comm::DroneFalconOutput>("/eta", 1);
 }
@@ -613,17 +615,22 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
   // (= ZYX Euler angles with X=X, Y=Y, Z=Z, same orientation is obtained by rotating X around fixed X, Y around fixed Y, and Z around fixed Z, as rotating Z around original Z, Y around rotated Y, and X around rotated X)
   ignition::math::Vector3d euler_angles = gazebo_quaternion.Euler();
 
+  // Convert XYZ fixed angles to Ignition quaternion for ground truth state
+  ignition::math::Quaternion<double> gazebo_quaternion_state = ignition::math::Quaternion<double>(euler_angles.X(), euler_angles.Y(), euler_angles.Z());
+
   // Add noise to XYZ fixed angles
   euler_angles.X() += meas_noise_(3); // Roll
   euler_angles.Y() += meas_noise_(4); // Pitch
   euler_angles.Z() += meas_noise_(5); // Yaw
 
-  // Convert XYZ fixed angles to Ignition quaternion
-  gazebo_quaternion = ignition::math::Quaternion<double>(euler_angles.X(), euler_angles.Y(), euler_angles.Z());
+  // Convert XYZ fixed angles to Ignition quaternion for output
+  ignition::math::Quaternion<double> gazebo_quaternion_output = ignition::math::Quaternion<double>(euler_angles.X(), euler_angles.Y(), euler_angles.Z());
 
   // Convert Ignition quaternion to Eigen quaternion
-  Eigen::Quaterniond gazebo_quaternion_eigen(gazebo_quaternion.W(), gazebo_quaternion.X(),
-                                             gazebo_quaternion.Y(), gazebo_quaternion.Z());
+  Eigen::Quaterniond gazebo_quaternion_eigen_state(gazebo_quaternion_state.W(), gazebo_quaternion_state.X(),
+                                                   gazebo_quaternion_state.Y(), gazebo_quaternion_state.Z());
+  Eigen::Quaterniond gazebo_quaternion_eigen_output(gazebo_quaternion_output.W(), gazebo_quaternion_output.X(),
+                                                    gazebo_quaternion_output.Y(), gazebo_quaternion_output.Z());
 
   // // Calculate measurement noise on quaternion
   // Eigen::Vector3d theta = meas_noise_.segment(3, 3);
@@ -634,46 +641,83 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
   // q_W_L = q_W_L * q_n;
   // q_W_L.normalize();
 
-  ros_odometry_msg_.header.frame_id = parent_frame_id_;
-  ros_odometry_msg_.header.stamp.sec = (world_->SimTime()).sec;
-  ros_odometry_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
-  ros_odometry_msg_.child_frame_id = child_frame_id_;
+  // Construct odom state message
+  ros_odometry_state_msg_.header.frame_id = parent_frame_id_;
+  ros_odometry_state_msg_.header.stamp.sec = (world_->SimTime()).sec;
+  ros_odometry_state_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
+  ros_odometry_state_msg_.child_frame_id = child_frame_id_;
 
   // NOTE: linear velocities are given in inertial frame, which is in contrast to the ROS standard!
-  ros_odometry_msg_.pose.pose.position.x = 
+  ros_odometry_state_msg_.pose.pose.position.x = 
+      gazebo_pose.Pos().X();
+  ros_odometry_state_msg_.pose.pose.position.y =
+      gazebo_pose.Pos().Y();
+  ros_odometry_state_msg_.pose.pose.position.z =
+      gazebo_pose.Pos().Z();
+  ros_odometry_state_msg_.pose.pose.orientation.w = 
+      gazebo_quaternion_eigen_state.w();
+  ros_odometry_state_msg_.pose.pose.orientation.x =
+      gazebo_quaternion_eigen_state.x();
+  ros_odometry_state_msg_.pose.pose.orientation.y =
+      gazebo_quaternion_eigen_state.y();
+  ros_odometry_state_msg_.pose.pose.orientation.z =
+      gazebo_quaternion_eigen_state.z();
+  ros_odometry_state_msg_.twist.twist.linear.x =
+      gazebo_linear_velocity.X();
+  ros_odometry_state_msg_.twist.twist.linear.y =
+      gazebo_linear_velocity.Y();
+  ros_odometry_state_msg_.twist.twist.linear.z =
+      gazebo_linear_velocity.Z();
+  ros_odometry_state_msg_.twist.twist.angular.x =
+      gazebo_angular_velocity.X();
+  ros_odometry_state_msg_.twist.twist.angular.y =
+      gazebo_angular_velocity.Y();
+  ros_odometry_state_msg_.twist.twist.angular.z =
+      gazebo_angular_velocity.Z();
+
+  ros_odometry_state_pub_.publish(ros_odometry_state_msg_);
+
+  // Construct odom output message
+  ros_odometry_output_msg_.header.frame_id = parent_frame_id_;
+  ros_odometry_output_msg_.header.stamp.sec = (world_->SimTime()).sec;
+  ros_odometry_output_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
+  ros_odometry_output_msg_.child_frame_id = child_frame_id_;
+
+  // NOTE: linear velocities are given in inertial frame, which is in contrast to the ROS standard!
+  ros_odometry_output_msg_.pose.pose.position.x = 
       gazebo_pose.Pos().X() + meas_noise_(0);
-  ros_odometry_msg_.pose.pose.position.y =
+  ros_odometry_output_msg_.pose.pose.position.y =
       gazebo_pose.Pos().Y() + meas_noise_(1);
-  ros_odometry_msg_.pose.pose.position.z =
+  ros_odometry_output_msg_.pose.pose.position.z =
       gazebo_pose.Pos().Z() + meas_noise_(2);
-  ros_odometry_msg_.pose.pose.orientation.w = 
-      gazebo_quaternion_eigen.w();
-  ros_odometry_msg_.pose.pose.orientation.x =
-    gazebo_quaternion_eigen.x();
-  ros_odometry_msg_.pose.pose.orientation.y =
-    gazebo_quaternion_eigen.y();
-  ros_odometry_msg_.pose.pose.orientation.z =
-    gazebo_quaternion_eigen.z();
-  ros_odometry_msg_.twist.twist.linear.x =
+  ros_odometry_output_msg_.pose.pose.orientation.w = 
+      gazebo_quaternion_eigen_output.w();
+  ros_odometry_output_msg_.pose.pose.orientation.x =
+      gazebo_quaternion_eigen_output.x();
+  ros_odometry_output_msg_.pose.pose.orientation.y =
+      gazebo_quaternion_eigen_output.y();
+  ros_odometry_output_msg_.pose.pose.orientation.z =
+      gazebo_quaternion_eigen_output.z();
+  ros_odometry_output_msg_.twist.twist.linear.x =
       gazebo_linear_velocity.X() + meas_noise_(6);
-  ros_odometry_msg_.twist.twist.linear.y =
+  ros_odometry_output_msg_.twist.twist.linear.y =
       gazebo_linear_velocity.Y() + meas_noise_(7);
-  ros_odometry_msg_.twist.twist.linear.z =
+  ros_odometry_output_msg_.twist.twist.linear.z =
       gazebo_linear_velocity.Z() + meas_noise_(8);
-  ros_odometry_msg_.twist.twist.angular.x =
+  ros_odometry_output_msg_.twist.twist.angular.x =
       gazebo_angular_velocity.X() + meas_noise_(9);
-  ros_odometry_msg_.twist.twist.angular.y =
+  ros_odometry_output_msg_.twist.twist.angular.y =
       gazebo_angular_velocity.Y() + meas_noise_(10);
-  ros_odometry_msg_.twist.twist.angular.z =
+  ros_odometry_output_msg_.twist.twist.angular.z =
       gazebo_angular_velocity.Z() + meas_noise_(11);
 
-  ros_odometry_pub_.publish(ros_odometry_msg_);
+  ros_odometry_output_pub_.publish(ros_odometry_output_msg_);
 
   if (add_noise_) {
     meas_noise_msg_.header.frame_id = parent_frame_id_;
     meas_noise_msg_.header.stamp.sec = (world_->SimTime()).sec;
     meas_noise_msg_.header.stamp.nsec = (world_->SimTime()).nsec;
-    ros_odometry_msg_.child_frame_id = child_frame_id_;
+    ros_odometry_output_msg_.child_frame_id = child_frame_id_;
 
     meas_noise_msg_.y.resize(12);
     for (int i = 0; i < 12; ++i) {
