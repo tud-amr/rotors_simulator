@@ -217,14 +217,14 @@ void GazeboMotorModel::OnUpdate(const common::UpdateInfo& _info) {
   if (pubs_and_subs_created_) {
     if (step_count_ == 0 && !updated_command_received_) {
       std::cerr << "GazeboMotorModel::OnUpdate(" << motor_number_ << "): "
-                << "No updated command received!" << std::endl;
+                << "No updated command received at t=" << _info.simTime.Double() << "!" << std::endl;
     }
   } else {
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
   }
   step_count_++;
-  if (step_count_ >= 5) {
+  if (step_count_ >= 1) {
     step_count_ = 0;
   }
   updated_command_received_ = false;
