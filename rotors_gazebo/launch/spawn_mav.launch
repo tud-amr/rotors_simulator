@@ -10,6 +10,7 @@
   <arg name="z" default="0.1"/>
   <arg name="enable_logging" default="false"/>
   <arg name="enable_ground_truth" default="true"/>
+  <arg name="add_meas_noise_init" default="false"/>
   <arg name="add_meas_noise" default="false"/>
   <arg name="log_file" default="$(arg mav_name)"/>
   <arg name="wait_to_record_bag" default="false"/>
@@ -24,7 +25,7 @@
     log_file:=$(arg log_file)
     wait_to_record_bag:=$(arg wait_to_record_bag)
     mav_name:=$(arg mav_name)
-    namespace:=$(arg namespace) add_meas_noise:=$(arg add_meas_noise)"
+    namespace:=$(arg namespace) add_meas_noise_init:=$(arg add_meas_noise_init) add_meas_noise:=$(arg add_meas_noise)"
   />
   <param name="tf_prefix" type="string" value="$(arg tf_prefix)" />
 

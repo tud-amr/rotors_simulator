@@ -359,7 +359,7 @@
       noise_normal_angular_velocity noise_uniform_position
       noise_uniform_quaternion noise_uniform_linear_velocity
       noise_uniform_angular_velocity enable_odometry_map odometry_map
-      image_scale add_noise random_engine_seed *inertia *origin">
+      image_scale add_noise_init add_noise random_engine_seed *inertia *origin">
     <!-- odometry link -->
     <link name="${namespace}/odometry_sensor${odometry_sensor_suffix}_link">
       <inertial>
@@ -400,6 +400,7 @@
           <covarianceImage>package://rotors_gazebo/resource/${odometry_map}</covarianceImage> <!-- a bitmap image describing where the sensor works (white), and where not (black) -->
           <covarianceImageScale>${image_scale}</covarianceImageScale> <!-- the scale of the image in the gazebo world, if set to 1.0, 1 pixel in the image corresponds to 1 meter in the world -->
         </xacro:if>
+        <addNoiseInit>${add_noise_init}</addNoiseInit> <!-- if true, the noise is added to the first measurement -->
         <addNoise>${add_noise}</addNoise>
         <randomEngineSeed>${random_engine_seed}</randomEngineSeed> <!-- seed for the random engine -->
       </plugin>
@@ -772,6 +773,7 @@
         enable_odometry_map="false"
         odometry_map=""
         image_scale=""
+        add_noise_init="false"
         add_noise="false"
         random_engine_seed="1">
         <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->
@@ -850,6 +852,7 @@
       enable_odometry_map="false"
       odometry_map=""
       image_scale=""
+      add_noise_init="false"
       add_noise="false"
       random_engine_seed="1">
       <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->

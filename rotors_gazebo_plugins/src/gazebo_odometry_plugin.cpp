@@ -151,6 +151,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model,
   getSdfParam<double>(_sdf, "unknownDelay", unknown_delay_, unknown_delay_);
   getSdfParam<double>(_sdf, "covarianceImageScale", covariance_image_scale_,
                       covariance_image_scale_);
+  getSdfParam<bool>(_sdf, "addNoiseInit", add_noise_init_, false);
   getSdfParam<bool>(_sdf, "addNoise", add_noise_, false);
 
   random_u_generator_.setSeed(seed_);
@@ -599,7 +600,7 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
   }
 
   // Compute measurement noise
-  if (add_noise_) {
+  if ((!first_run_ || add_noise_init_) && add_noise_) {
     meas_noise_ = random_u_generator_.generate();
   } else {
       meas_noise_ = Eigen::VectorXd::Zero(12);
@@ -726,6 +727,8 @@ void GazeboOdometryPlugin::OnWorldUpdateEnd() {
 
     meas_noise_pub_.publish(meas_noise_msg_);
   }
+
+  first_run_ = false;
 }
 
 void GazeboOdometryPlugin::CreatePubsAndSubs() {
