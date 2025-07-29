@@ -24,6 +24,8 @@
 #include "ConnectGazeboToRosTopic.pb.h"
 #include "ConnectRosToGazeboTopic.pb.h"
 
+#include <cmath>
+
 namespace gazebo {
 
 GazeboMotorModel::~GazeboMotorModel() {
@@ -206,6 +208,9 @@ void GazeboMotorModel::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   rotor_velocity_filter_.reset(
       new FirstOrderFilter<double>(
           time_constant_up_, time_constant_down_, ref_motor_input_));
+
+  // Start ref_motor_input_ at hovering value
+  ref_motor_input_ = sqrt(0.617 * 9.8124 / 4 / motor_constant_);
 }
 
 // This gets called by the world update start event.
